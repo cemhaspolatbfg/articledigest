@@ -1,0 +1,47 @@
+name: Fetch arXiv daily
+
+on:
+  schedule:
+    # Her gün 05:00 UTC = 08:00 Türkiye saati
+    # arXiv batch'i ~14:00 ET (21:00 TR) yayınlanır, 
+    # ertesi sabah 08:00'de çekmek ideal
+    - cron: '0 5 * * 1-5'  # Pazartesi-Cuma
+
+  # Manuel tetikleme (test için)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch arXiv data
+        run: python scripts/fetch_arxiv.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # data/ klasöründeki yeni XML'i ekle
+          git add data/
+          
+          # Değişiklik varsa commit'le (yoksa skip)
+          if git diff --staged --quiet; then
+            echo "No new data to commit"
+          else
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "arxiv-data: ${DATE}"
+            git push
+          fi

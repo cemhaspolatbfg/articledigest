@@ -1,28 +1,48 @@
 # Sources — arXiv Daily Digest
 
-> Bu dosya, Routine'in her gün taraması gereken arXiv kategorilerini,
-> anahtar kelimeleri ve API sorgu stratejisini içerir.
-> Routine sadece burada tanımlanan kategoriler ve anahtar kelimeler üzerinden çalışır.
+> Bu dosya, Routine'in her gün kullanacağı veri kaynağını ve anahtar kelime
+> yapısını tanımlar.
+> 
+> **ÖNEMLİ:** arXiv API'ye routine'in sandbox ortamından erişim yok
+> (`host_not_allowed`). Bunun yerine bir GitHub Actions workflow her sabah
+> 08:00'de (TR) arXiv API'den veriyi çekip `data/arxiv-YYYY-MM-DD.xml`
+> olarak repo'ya commit'ler. Routine bu dosyayı okur.
 
 ---
 
-## Birincil Erişim: arXiv API
+## Veri Akışı
 
-arXiv HTML sayfalarına scraping ile erişim rate limit riski taşır.
-Bunun yerine **arXiv'in resmi API'si** kullanılır.
+```
+08:00 TR — GitHub Actions çalışır
+         → scripts/fetch_arxiv.py arXiv API'den veri çeker
+         → data/arxiv-YYYY-MM-DD.xml olarak repo'ya commit'ler
 
-**Endpoint:** `http://export.arxiv.org/api/query`
+09:00 TR — Claude Code Routine çalışır
+         → data/arxiv-YYYY-MM-DD.xml dosyasını repo'dan okur
+         → Semantik filtreleme yapar
+         → Digest hazırlar, Gmail draft + archive commit
+```
 
-**Avantajları:**
-- Yapılandırılmış Atom/XML cevabı (başlık, yazarlar, özet, kategoriler, tarih)
-- Rate limit toleransı yüksek, günde 1 sorgu için sıfır risk
-- `submittedDate` filtresi ile son 24 saat hassas seçilebilir
-- Cross-list'leri ana sonuçlarla birlikte döner
+---
 
-**Sorgu parametreleri:**
-- `search_query`: Kategoriler + anahtar kelimeler (aşağıda detay)
-- `sortBy=submittedDate&sortOrder=descending`
-- `max_results=200` (güvenli üst sınır; günlük hacim genelde bunun altında)
+## Veri Dosyası
+
+- **Konum:** `data/arxiv-YYYY-MM-DD.xml`
+- **Format:** Atom/XML (arXiv API'nin standart çıktısı)
+- **Oluşturan:** GitHub Actions workflow (`fetch-arxiv.yml`)
+- **Routine ne yapmalı:** Bugünün tarihine uygun dosyayı oku. Dosya yoksa
+  (Actions çalışmamış veya başarısız olmuş) execution summary'de belirt ve dur.
+
+### XML Entry Yapısı
+
+Her `<entry>` şunları içerir:
+- `<id>` — arXiv abs URL'i (örn: `http://arxiv.org/abs/2603.12345v1`)
+- `<title>` — Makale başlığı
+- `<summary>` — Makale özeti (abstract)
+- `<author>` — Yazar isimleri
+- `<category>` — Ana kategori ve cross-list'ler
+- `<published>` — İlk submission tarihi (ISO 8601)
+- `<updated>` — Son güncelleme tarihi
 
 ---
 
@@ -42,158 +62,54 @@ Bunun yerine **arXiv'in resmi API'si** kullanılır.
 | cs.SI | Social and Information Networks | Platform dinamikleri, kullanıcı davranışı |
 | econ.GN | General Economics | Fintech, dijital pazarlar, startup ekonomisi |
 
-arXiv API sorgusunda kategori filtresi formatı:
-```
-cat:cs.AI OR cat:cs.HC OR cat:cs.GT OR cat:cs.CY OR cat:cs.MA OR cat:cs.CL OR cat:cs.LG OR cat:cs.SE OR cat:cs.IR OR cat:cs.SI OR cat:econ.GN
-```
-
 ---
 
 ## Anahtar Kelime Listesi (3 Eksen)
 
-Her anahtar kelime **tam ifade** olarak aranır — yani "game design" sorgusu "game" ve "design" kelimelerinin ayrı ayrı geçtiği makaleleri değil, "game design" ifadesinin bütünsel olarak geçtiği makaleleri yakalar.
-
 ### Eksen 1: Oyun & Gamification — Gevşek Mod
 
-**Arama alanı:** `all:` (başlık + özet + kategori notları)
-**Sebep:** Oyun geliştirme makaleleri genellikle başlıkta "game" kelimesini içermez; özette detay verir. Gevşek mod kaçırma riskini azaltır.
+**Arama alanı:** `all:` (başlık + özet)
 
-Anahtar kelimeler:
-- `game design`
-- `game development`
-- `gameplay`
-- `video game`
-- `procedural content generation`
-- `PCG`
-- `level generation`
-- `NPC`
-- `game AI`
-- `player behavior`
-- `gamification`
-- `game mechanics`
-- `engagement loop`
-- `reward system`
-- `player retention`
+- game design, game development, gameplay, video game
+- procedural content generation, PCG, level generation
+- NPC, game AI, player behavior
+- gamification, game mechanics, engagement loop
+- reward system, player retention
 
 ### Eksen 2: LLM'ler, Ajanlar, AI Araçları — Sıkı Mod
 
 **Arama alanı:** `ti:` (sadece başlık)
-**Sebep:** LLM/agent makaleleri zaten çok fazla; sıkı mod sadece gerçekten bu konuya **özel** olanları yakalar. Özette geçen dolaylı bahsetmeleri filtreler.
 
-Anahtar kelimeler:
-- `LLM agent`
-- `agentic`
-- `multi-agent`
-- `tool use`
-- `RAG`
-- `prompt engineering`
-- `autonomous agent`
-- `workflow automation`
-- `AI assistant`
-- `copilot`
-- `code generation`
+- LLM agent, agentic, multi-agent, tool use
+- RAG, prompt engineering, autonomous agent
+- workflow automation, AI assistant, copilot, code generation
 
 ### Eksen 3: Girişimcilik & Dijital Ekonomi — Sıkı Mod
 
 **Arama alanı:** `ti:` (sadece başlık)
-**Sebep:** Ekonomi terimleri genel geçerlidir; "startup" özette birçok yerde anlamsız geçebilir. Sıkı mod, ana konu **bu olan** makaleleri yakalar.
 
-Anahtar kelimeler:
-- `platform economy`
-- `two-sided market`
-- `marketplace`
-- `network effect`
-- `creator economy`
-- `digital labor`
-- `gig economy`
-- `fintech`
-- `digital payment`
-- `startup`
-- `monetization`
-- `subscription`
-- `user acquisition`
-- `product-market fit`
+- platform economy, two-sided market, marketplace
+- network effect, creator economy, digital labor
+- gig economy, fintech, digital payment
+- startup, monetization, subscription
+- user acquisition, product-market fit
 
----
-
-## arXiv API Sorgu Formatı
-
-Tek bir HTTP GET isteği ile tüm eksenler birden taranır. Sorgu yapısı:
-
-```
-(kategori_filtresi) AND ((eksen1_kelimeleri) OR (eksen2_kelimeleri) OR (eksen3_kelimeleri))
-```
-
-### Örnek Sorgu Yapısı
-
-```
-search_query=
-  (cat:cs.AI OR cat:cs.HC OR cat:cs.GT OR cat:cs.CY OR cat:cs.MA
-   OR cat:cs.CL OR cat:cs.LG OR cat:cs.SE OR cat:cs.IR OR cat:cs.SI
-   OR cat:econ.GN)
-  AND
-  (
-    all:"game design" OR all:"game development" OR all:"gameplay"
-    OR all:"video game" OR all:"procedural content generation"
-    OR all:"PCG" OR all:"level generation" OR all:"NPC"
-    OR all:"game AI" OR all:"player behavior" OR all:"gamification"
-    OR all:"game mechanics" OR all:"engagement loop"
-    OR all:"reward system" OR all:"player retention"
-    OR ti:"LLM agent" OR ti:"agentic" OR ti:"multi-agent"
-    OR ti:"tool use" OR ti:"RAG" OR ti:"prompt engineering"
-    OR ti:"autonomous agent" OR ti:"workflow automation"
-    OR ti:"AI assistant" OR ti:"copilot" OR ti:"code generation"
-    OR ti:"platform economy" OR ti:"two-sided market"
-    OR ti:"marketplace" OR ti:"network effect"
-    OR ti:"creator economy" OR ti:"digital labor"
-    OR ti:"gig economy" OR ti:"fintech" OR ti:"digital payment"
-    OR ti:"startup" OR ti:"monetization" OR ti:"subscription"
-    OR ti:"user acquisition" OR ti:"product-market fit"
-  )
-&sortBy=submittedDate&sortOrder=descending
-&max_results=200
-```
-
-### Pratik Uygulama
-
-API cevabı bir Atom feed'dir. Her entry şunları içerir:
-- `<id>` — arXiv abs URL'i (örn: `http://arxiv.org/abs/2603.12345v1`)
-- `<title>` — Makale başlığı
-- `<summary>` — Makale özeti (abstract)
-- `<author>` — Yazar isimleri
-- `<category>` — Ana kategori ve cross-list'ler
-- `<published>` — İlk submission tarihi
-- `<updated>` — Son güncelleme tarihi
-
-Routine her entry için:
-1. `<published>` tarihini kontrol eder (zaman aralığına uygun mu?)
-2. Başlık + özeti girişimci lens'inden değerlendirir (Katman 2)
-3. Seçilenleri yüzeysel özet + "neden ilgilenmelisin" cümlesi ile sunar
+> **Not:** Bu anahtar kelimeler `scripts/fetch_arxiv.py`'de de tanımlıdır.
+> Bir kelime eklemek/çıkarmak istersen **hem bu dosyayı hem script'i** güncelle.
 
 ---
 
 ## Zaman Aralığı Stratejisi
 
-arXiv hafta sonu yayın yapmaz. Routine Pazartesi-Cuma çalışır.
+arXiv hafta sonu yayın yapmaz. Hem Actions hem Routine Pazartesi-Cuma çalışır.
 
-| Çalıştığı Gün | Hangi Submissions? | `submittedDate` Aralığı (Eastern Time) |
+| Gün | Hangi Submissions? | Zaman Aralığı |
 |---|---|---|
-| Pazartesi | Cuma akşamından Pazartesi öğlenine | Son 72 saat |
-| Salı | Pazartesi öğleden Salı sabahına | Son 24 saat |
-| Çarşamba | Salı'dan Çarşamba'ya | Son 24 saat |
-| Perşembe | Çarşamba'dan Perşembe'ye | Son 24 saat |
-| Cuma | Perşembe'den Cuma sabahına | Son 24 saat |
+| Pazartesi | Cuma batch'i dahil | Son 72 saat |
+| Salı-Cuma | Önceki günün batch'i | Son 24 saat |
 
-**Not:** arXiv'in "yeni submission" batch'i her gece 14:00 ET civarında (TR saatiyle sabaha karşı) yayınlanır. Routine TR saatiyle sabah 09:00 civarında çalıştırılırsa o günün batch'i hazır olur.
+Zaman filtresi routine tarafında uygulanır (XML'deki `<published>` alanına bakarak).
 
 ---
 
-## Son Notlar
-
-- Eğer bir eksen haftalarca sonuç vermezse veya çok fazla gürültü üretirse, anahtar kelime listesi burada güncellenebilir.
-- Yeni bir ilgi alanı eklenirse, yeni bir eksen eklenir (mevcut eksenlere kelime sıkıştırmak yerine).
-- API sorgusu URL-encode gerektirir; routine bunu otomatik yapmalı.
-
----
-
-*Son güncelleme: 2026-04-20 (İlk kurulum)*
+*Son güncelleme: 2026-04-20 (GitHub Actions fetch mimarisi)*
