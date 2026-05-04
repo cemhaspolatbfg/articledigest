@@ -43,5 +43,6 @@ jobs:
           else
             DATE=$(date -u +%Y-%m-%d)
             git commit -m "arxiv-data: ${DATE}"
+            git pull --rebase origin main
             git push
           fi
