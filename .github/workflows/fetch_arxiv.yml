@@ -2,10 +2,10 @@ name: Fetch arXiv daily
 
 on:
   schedule:
-    # Her gün 05:00 UTC = 08:00 Türkiye saati
-    # arXiv batch'i ~14:00 ET (21:00 TR) yayınlanır, 
-    # ertesi sabah 08:00'de çekmek ideal
-    - cron: '0 5 * * 1-5'  # Pazartesi-Cuma
+    # Her gün 04:00 UTC = 07:00 Türkiye saati
+    # arXiv batch'i ~14:00 ET (21:00 TR) yayınlanır,
+    # ertesi sabah 07:00'de çekmek ideal; routine 10:00'da çalışır (3h buffer)
+    - cron: '0 4 * * 1-5'  # Pazartesi-Cuma
 
   # Manuel tetikleme (test için)
   workflow_dispatch:
