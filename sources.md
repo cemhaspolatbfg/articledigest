@@ -13,11 +13,11 @@
 ## Veri Akışı
 
 ```
-08:00 TR — GitHub Actions çalışır
+07:00 TR — GitHub Actions çalışır
          → scripts/fetch_arxiv.py arXiv API'den veri çeker
          → data/arxiv-YYYY-MM-DD.xml olarak repo'ya commit'ler
 
-09:00 TR — Claude Code Routine çalışır
+10:00 TR — Claude Code Routine çalışır
          → data/arxiv-YYYY-MM-DD.xml dosyasını repo'dan okur
          → Semantik filtreleme yapar
          → Digest hazırlar, Gmail draft + archive commit
