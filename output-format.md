@@ -76,8 +76,7 @@ Aşağıdaki şablonu kullan. Köşeli parantez içindeki yer tutucuları içeri
   <p style="color: #888; font-size: 12px;">
     <strong>Execution Summary:</strong><br>
     Tarih: [YYYY-MM-DD] ([GÜN_ADI])<br>
-    Zaman aralığı: [X saat]<br>
-    API aday: [N] · Zaman filtresi sonrası: [M] · Dahil edilen: [K]<br>
+    XML toplam: [N] · Dedupe sonrası: [M] · Dahil edilen: [K]<br>
     Eksen dağılımı: 🎮 [X] · 🤖 [Y] · 💼 [Z]<br>
     Çalışma süresi: [T]
   </p>
@@ -147,8 +146,7 @@ Semantik filtre sonrası **hiç** makale kalmadıysa, şablonu yine oluştur ama
 ## Execution Summary
 
 - Tarih: YYYY-MM-DD (GÜN_ADI)
-- Zaman aralığı: X saat
-- API aday: N · Zaman filtresi sonrası: M · Dahil edilen: K
+- XML toplam: N · Dedupe sonrası: M · Dahil edilen: K
 - Eksen dağılımı: 🎮 X · 🤖 Y · 💼 Z
 - Çalışma süresi: T
 ```

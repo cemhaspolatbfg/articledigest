@@ -26,15 +26,12 @@ Sen bir akademik araştırma tarayıcısısın. Repo'daki `data/` klasöründen 
 
 ## Görev Akışı (7 Adım)
 
-### 1. TARİH VE ZAMAN ARALIĞI HESAPLAMA
+### 1. TARİH BELİRLE
 
-Bugünkü tarihi al. Haftanın gününü belirle.
+Bugünkü tarihi al — veri dosyasının adını oluşturmak için kullanılır.
 
-- **Pazartesi:** Zaman aralığı = son 72 saat (Cuma submission batch'i dahil)
-- **Salı-Cuma:** Zaman aralığı = son 24 saat
-- **Cumartesi/Pazar:** Routine çalışmamalı; execution summary'de belirt ve dur
-
-Zaman aralığı UTC üzerinden hesaplanır.
+- **Cumartesi/Pazar:** Routine çalışmamalı; execution summary'de belirt ve dur.
+- **Pazartesi-Cuma:** Devam et.
 
 ### 2. VERİ DOSYASINI OKU
 
@@ -52,14 +49,15 @@ Zaman aralığı UTC üzerinden hesaplanır.
 - XML'i parse et
 - Her `<entry>` için `<id>`, `<title>`, `<summary>`, `<published>`, `<category>` alanlarını çıkar
 
-### 3. ZAMAN FİLTRESİ
+### 3. DEDUPLIKASYON
 
-Her entry için:
-- `<published>` alanını oku (ISO 8601 formatı)
-- Adım 1'deki zaman aralığının dışındaysa o entry'yi **at**
-- `<published>` kullan, `<updated>` DEĞİL (revize edilmiş makaleleri elemek için)
-- Zaman aralığında olanları aday listesine ekle
-- Aynı `<id>`'li entry birden fazla varsa (cross-list) dedupe et
+XML dosyası GitHub Actions tarafından zaten ilgili günün batch'iyle sınırlı gelir;
+routine'de ayrıca `<published>` bazlı zaman filtresi uygulanmaz.
+
+Yap:
+- Her entry'nin `<id>` alanından base arXiv ID'yi çıkar (versiyon sonekini at: `v1`, `v2` vb.)
+- Aynı base ID'ye sahip birden fazla entry varsa (cross-list durumu) ilkini tut, kalanları at
+- Kalan tüm entry'leri aday listesine ekle
 
 ### 4. SEMANTİK FİLTRELEME (KATMAN 3)
 
@@ -140,9 +138,8 @@ Kötü örnek: *"Oyun geliştirme konusunda faydalı olabilir."*
 Execution Summary:
 - Tarih: YYYY-MM-DD (GÜN_ADI)
 - Veri dosyası: data/arxiv-YYYY-MM-DD.xml [bulundu/bulunamadı]
-- Zaman aralığı: [X saat]
 - XML'deki toplam entry: [N]
-- Zaman filtresi sonrası: [M]
+- Dedupe sonrası: [M]
 - Semantik filtre sonrası (dahil edilen): [K]
 - Eksen dağılımı: 🎮 X · 🤖 Y · 💼 Z
 - Çalışma süresi: [T]

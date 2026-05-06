@@ -101,15 +101,22 @@ Her `<entry>` şunları içerir:
 
 ## Zaman Aralığı Stratejisi
 
-arXiv hafta sonu yayın yapmaz. Hem Actions hem Routine Pazartesi-Cuma çalışır.
+GitHub Actions her sabah 07:00 TR'de arXiv'i sorgular ve o güne ait makaleleri
+`data/arxiv-YYYY-MM-DD.xml` dosyasına yazar. Routine 10:00 TR'de başlar (3 saatlik
+buffer, Actions gecikmelerine karşı).
 
-| Gün | Hangi Submissions? | Zaman Aralığı |
-|---|---|---|
-| Pazartesi | Cuma batch'i dahil | Son 72 saat |
-| Salı-Cuma | Önceki günün batch'i | Son 24 saat |
+**Routine'de ayrıca `<published>` bazlı zaman filtresi uygulanmaz.** XML dosyasının
+kendisi zaten ilgili günün submission batch'ini içerir; routine sadece arXiv ID'ye
+göre dedupe yapıp semantik filtreye geçer. Bu sayede fetch zamanlamasındaki küçük
+kaymalar nedeniyle hiçbir makale kaybolmaz.
 
-Zaman filtresi routine tarafında uygulanır (XML'deki `<published>` alanına bakarak).
+Cross-list ve revizyon edge case'leri:
+- **Cross-list:** Aynı makale farklı kategorilerde görünebilir → arXiv ID'ye göre
+  dedupe ile tek entry kalır.
+- **Revize edilmiş makaleler:** `<published>` (ilk submission tarihi) esas alınır,
+  `<updated>` göz ardı edilir; bu, eski revizyon güncellemelerini dışarıda bırakmak
+  için fetch sorgusunda `submittedDate` filtresiyle zaten önlenir.
 
 ---
 
-*Son güncelleme: 2026-04-20 (GitHub Actions fetch mimarisi)*
+*Son güncelleme: 2026-05-06 (Zaman filtresi routine'den kaldırıldı)*
