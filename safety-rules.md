@@ -22,6 +22,8 @@ Bu routine sadece aşağıdaki tool'ları kullanabilir:
 - **arXiv API** (`export.arxiv.org/api/query`) — Birincil kaynak
 - **GitHub repo erişimi** — Sadece `archive/` klasörüne yazma; diğer dosyalar read-only
 - **Gmail connector** — Sadece `output-format.md`'deki adrese draft oluşturma
+- **`mcp__github__actions_run_trigger`** — Yalnızca `fetch_arxiv.yml` workflow'unu `run_workflow` methodu ile tetiklemek için; başka workflow veya method kullanma
+- **`mcp__github__actions_list`** — Yalnızca `fetch_arxiv.yml` run durumunu sorgulamak için (`list_workflow_runs`)
 
 Yasak olanlar:
 - arXiv HTML sayfalarına scraping (`/list/`, `/abs/` sayfaları) — API varken gereksiz, rate limit riski
