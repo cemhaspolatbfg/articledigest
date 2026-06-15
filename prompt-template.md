@@ -39,13 +39,37 @@ Bugünkü tarihi al — veri dosyasının adını oluşturmak için kullanılır
 - Dosya adı: `data/arxiv-YYYY-MM-DD.xml`
 - Bugün 2026-04-20 ise → `data/arxiv-2026-04-20.xml`
 
-**Dosya yoksa:**
-- GitHub Actions çalışmamış veya başarısız olmuş demektir
-- Execution summary'de "Veri dosyası bulunamadı" belirt
-- Boş digest maili oluştur (`output-format.md`'deki "hiç makale yok" şablonu)
-- Dur
+**Dosyayı bulma sırası:**
+1. Önce yerel `data/arxiv-YYYY-MM-DD.xml` dosyasına bak
+2. Yerelde yoksa `git show origin/main:data/arxiv-YYYY-MM-DD.xml` ile `origin/main`'den dene ve yerel dizine yaz
 
-**Dosya varsa:**
+**İkisi de yoksa → Actions otomatik tetikleme:**
+
+GitHub Actions workflow'u zamanında çalışmamış demektir. Şu adımları uygula:
+
+1. `mcp__github__actions_run_trigger` ile `fetch_arxiv.yml` workflow'unu tetikle:
+   - `method`: `run_workflow`
+   - `owner`: `cemhaspolatbfg`
+   - `repo`: `articledigest`
+   - `workflow_id`: `fetch_arxiv.yml`
+   - `ref`: `main`
+
+2. Workflow'un tamamlanmasını bekle — `mcp__github__actions_list` ile her 60 saniyede bir durumu kontrol et (maksimum 10 deneme = ~10 dakika):
+   - `method`: `list_workflow_runs`
+   - `resource_id`: `fetch_arxiv.yml`
+   - En son çalışmanın (`created_at` en yeni) `status` ve `conclusion` alanını oku
+
+3. `status: completed` + `conclusion: success` görünce:
+   - `git fetch origin main` yap
+   - `git show origin/main:data/arxiv-YYYY-MM-DD.xml` ile dosyayı yerel dizine yaz
+   - Devam et
+
+4. `conclusion: failure` veya 10 deneme sonunda hâlâ `completed` değilse:
+   - Execution summary'de "Actions tetiklendi fakat başarısız oldu / zaman aşımı" belirt
+   - Boş digest maili oluştur (`output-format.md`'deki "hiç makale yok" şablonu)
+   - Dur
+
+**Dosya bulununca:**
 - XML'i parse et
 - Her `<entry>` için `<id>`, `<title>`, `<summary>`, `<published>`, `<category>` alanlarını çıkar
 
@@ -149,7 +173,7 @@ Execution Summary:
 
 ## Hata Toleransı
 
-- **Veri dosyası yok:** Boş digest oluştur, execution summary'de "Actions çalışmamış" belirt
+- **Veri dosyası yok:** Önce `workflow_dispatch` ile Actions'ı tetikle ve bekle; hâlâ başarısız olursa boş digest oluştur, execution summary'de nedeni belirt
 - **XML parse hatası:** Execution summary'de belirt, dur
 - **Zaman filtresi sonrası 0 makale:** "Bugün eşleşen makale yok" notiyla kısa digest
 - **Gmail draft başarısız:** Digest yine arşive commit'le; commit mesajına `(MAIL FAILED: <hata>)` ekle
@@ -160,7 +184,7 @@ Execution Summary:
 
 Şu durumlarda routine **durmayı seçer**:
 
-- Veri dosyası bulunamadı (Actions çalışmamış)
+- Veri dosyası bulunamadı ve Actions tetikleme de başarısız oldu / zaman aşımına uğradı
 - XML parse edilemiyor (dosya bozuk)
 - Semantik filtrede sistemik problem (hiçbirini dahil edememe veya hepsini dahil etme)
 
