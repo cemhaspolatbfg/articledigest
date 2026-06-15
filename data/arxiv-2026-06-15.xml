@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<feed xmlns:ns0="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns1="http://www.w3.org/2005/Atom" xmlns:ns2="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom"><title>arXiv Daily Digest - Combined Results</title><updated>2026-06-15T06:42:36.988679+00:00</updated><ns0:totalResults>299</ns0:totalResults><ns1:entry>
+<feed xmlns:ns0="http://a9.com/-/spec/opensearch/1.1/" xmlns:ns1="http://www.w3.org/2005/Atom" xmlns:ns2="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom"><title>arXiv Daily Digest - Combined Results</title><updated>2026-06-15T10:29:49.299599+00:00</updated><ns0:totalResults>299</ns0:totalResults><ns1:entry>
     <ns1:id>http://arxiv.org/abs/2606.14695v1</ns1:id>
     <ns1:title>Persona-Pruner: Sculpting Lightweight Models for Role-Playing</ns1:title>
     <ns1:updated>2026-06-12T17:58:08Z</ns1:updated>
